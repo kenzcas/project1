@@ -41,13 +41,8 @@ Note that you will need to read these datasets into R at the top of your Rmd fil
 
 ```{R eval=F}
 library(tidyverse)
-data1 <- read_csv("/path/to/dataset1.csv")
-data2 <- read_csv("/path/to/dataset2.csv")
-
-#or, if you'd prefer to read it in from some remote location
-
-data1 <- read_csv("https://some.website/dataset1.csv")
-data2 <- read_csv("https://some.website/dataset2.csv")
+drinks <- read_csv("data/alcohol-consumption/drinks.csv")
+cousin_marriage_data <- read_csv("data/cousin-marriage/cousin-marriage-data.csv")
 ```
 
 ### Guidelines
@@ -63,6 +58,8 @@ data2 <- read_csv("https://some.website/dataset2.csv")
 
     - You will document the type of join that you do (left/right/inner/full), including a discussion of how many observations/rows and distinct IDs were in each original dataset, which IDs appeared in one dataset but not the other, how many observations in each dataset were dropped (if any) after doing the join, and why you chose this particular join. 
 
+*projectdata1 <- drinks %>% left_join(marriage, by = c("country"="Country"))*
+*The 'drinks' dataset had 193 rows. The 'cousin_marriage_data' dataset had 70 rows.*
 
 3. Create summary statistics
 
