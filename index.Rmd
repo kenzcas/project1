@@ -1,0 +1,142 @@
+---
+title: 'Project 1: Wrangling, Exploration, Visualization'
+author: "SDS322E"
+date: ''
+output:
+  html_document:
+    toc: yes
+    toc_float:
+      collapsed: no
+      smooth_scroll: yes
+  pdf_document:
+    toc: no
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, eval = TRUE, fig.align = "center", warning = F, message = F,
+tidy=TRUE, tidy.opts=list(width.cutoff=60), R.options=list(max.print=100))
+```
+
+## Data Wrangling, Exploration, Visualization
+
+### McKenzie Castro mnc927
+
+#### Introduction 
+
+Paragraph or two introducing your datasets and variables, why they are interesting to you, etc.
+*The two datasets I have chosen contain infomation on alcohol consumption per person by country and . The 'drinks' dataset contains 5 variables: country, beer servings, wine servings, spirit servings, and total liters of pure alcohol. This data was aquired by the World Health Organization. This is interesting to me because I really did not have any knowledge on international trends in alcohol consumption. Alcohol consumption is linked to both positive social benefits, but also many negative health and behavorial consequences, so with that, I was interested in global trends. The 'cousin_marriage' dataset contains 2 variables: country and percentage of cousin marriage. This data was collected by Alan Bittles, a professor in Western Australia who has spent nearly fourty years researching consanguity. This dataset was interesting to me because even though only about 0.2% of marriages in the US are between second cousins or closer, marrying a close relative is not uncommon in other parts of the world. I am interested in where marrying close relatives is most common. I expect that countries with higher amounts of alcohol consumption have lower rates of cousin marriage. I expect this because in cultures and religions that prohibit alcohol consumption, arranged marriage to relatives is common. Additionally, countries with more money and power tend to look down upon, if not outlaw cousin marriage, but also consume more alcohol than less wealthy countries.*
+
+```{R}
+library(tidyverse)
+drinks <- read_csv("/stor/home/mnc927/project1/data/alcohol-consumption/drinks.csv")
+marriage <- read_csv("~/project1/data/cousin-marriage/cousin-marriage-data.csv")
+
+glimpse(drinks)
+glimpse(marriage)
+```
+
+#### Tidying: Reshaping
+
+If your datasets are tidy already, demonstrate that you can reshape data with pivot wider/longer here (e.g., untidy and then retidy). Alternatively, it may be easier to wait until the wrangling section so you can reshape your summary statistics. Note here if you are going to do this.
+
+```{R}
+
+#I am going to wait to do this until the wrangling section
+
+```
+    
+#### Joining/Merging
+
+```{R}
+projectdata1 <- marriage %>% left_join(drinks, by = c("Country" = "country"))
+
+drinks[185, "country"] <- "United States"
+drinks[121, "country"] <- "The Netherlands"
+drinks[183, "country"] <- "Great Britain"
+
+table(drinks$country %in% marriage$Country)
+table(marriage$Country %in% drinks$country)
+
+setdiff(drinks$country, marriage$Country)
+setdiff(marriage$Country, drinks$country)
+```
+*I chose to use a left join because I only wanted to return values of the ‘drink’ dataset that corresponded to countries that existed in the ‘marriage’ dataset, meaning there will not be values for countries outside of the seventy listed in the ‘marriage’ dataset. I wanted my resulting dataset to have the same number of rows as the intial 'marriage' dataset.* 
+*The 'drinks' dataset had 193 observations/rows and all 193 were unique. The 'marriage' dataset had 70 observations/rows, and all 70 were unique. The two datasets had 70 observations in common. There were 123 observations in the ‘drinks’ dataset that were not in the ‘marriage’ dataset. There were no observations in the ‘marriage’ dataset that were not in the ‘drinks’ dataset. 123 observations total were dropped after doing the join. The observations unique to the ‘drinks’ dataset were: Afghanistan, Albania, Andorra, Angola, Antigua & Barbuda, Armenia, Austria, Azerbaijan, Bahamas, Barbados, Belarus, Belize, Benin, Bhutan, Bosnia-Herzegovina, Botswana, Brunei, Bulgaria, Burundi, Cote d’Ivoire, Cabo Verde, Cambodia, Cameroon, Central African Republic, Chad, Comoros, Congo, Cook Islands, Cyprus, North Korea, DR, Congo, Denmark, Djibouti, Dominica, Dominican Republic, Equatorial Guinea, Eritrea, Estonia, Ethiopia, Fiji, Finland, Gabon, Gambia, Georgia, Germany, Ghana, Greece, Grenada, Guatemala, Guinea-Bissau, Guyana, Haiti, Iceland, Jamaica, Kazakhstan, Kenya, Kiribati, Laos, Latvia, Lesotho, Liberia, Lithuania, Luxembourg, Madagascar, Malawi, Maldives, Mali, Malta, Marshall Islands, Mauritania, Mauritius, Micronesia, Monaco, Mongolia, Montenegro, Mozambique, Myanmar, Namibia, Nauru, Nepal, New Zealand, Nicaragua, Niger, Niue, Palau, Papua New Guinea, Paraguay, Poland, South Korea, Moldova, Romania, Russian Federation, Rwanda, St. Kitts & Nevis, St. Lucia, St. Vincent & the Grenadines, Samoa, San Marino, Sao Tome & Principe, Senegal, Serbia, Seychelles, Sierra Leone, Slovakia, Solomon Islands, Somalia, Suriname, Swaziland, Switzerland, Thailand, Macedonia, Timor-Leste, Togo, Tonga, Trinidad & Tobago, Turkmenistan, Tuvalu, Uganda, Ukraine, Vanuatu, Vietnam, Zambia, and Zimbabwe. The datasets have 70 IDs in common which include: United States, Mexico, Cuba, Canada, El Salvador, Costa Rica, Honduras, Panama, Brazil, Colombia, Chile, Venezuela, Argentina, Ecuador, Peru, Uruguay, Bolivia, Burkina Faso, Nigeria, Sudan, Tanzania, Libya, Egypt, Tunisia, Guinea, Algeria, Morocco, South Africa, Australia, The Netherlands, United Kingdom, France, Sweden, Belgium, Ireland, Italy, Turkey, Spain, Portugal, Slovenia, Norway, Czech Republic, Croatia, Hungary, Indonesia, China, Japan, Kuwait, Pakistan, Kyrgyzstan, Qatar, Bahrain, Saudi Arabia, United Arab Emirates, Oman, Yemen, Iraq, Iran, Syria, Jordan, Lebanon, India, Uzbekistan, Sri Lanka, Israel, Tajikistan, Bangladesh, Malaysia, Singapore, and Philippines.*
+*The joined dataset is about half the size of the original 'drinks' dataset. 123 observations/rows were dropped in the join, as those were the countries not included in the 'marriage' dataset. While this does make the new dataset smaller, 70 countries is still enough to get a general idea of both alcohol consumption and cousin marriage trends globally. The only potential problem is that omitting over half of countries worldwide could prevent me from seeing what the real trends are when the entire world is considered.*
+
+####  Wrangling
+
+```{R}
+
+library(gt)
+table1 <- projectdata1 %>% filter(total_litres_of_pure_alcohol >= 10) 
+table1 %>% gt
+projectdata1 %>% select(1,6) %>% glimpse()
+projectdata1 %>% arrange(desc(Percent)) %>% glimpse()
+projectdata2 <- projectdata1 %>% mutate(total_servings = beer_servings + spirit_servings + wine_servings) %>% mutate(Country = str_replace(Country, "Great Britain", "United Kingdom"))
+
+projectdata2 <- projectdata2 %>% mutate(Continent = fct_collapse(Country, "North America" = c("United States", "Mexico", "Cuba", "Canada", "El Salvador", "Costa Rica", "Honduras", "Panama"), "South America" = c("Brazil", "Colombia", "Chile", "Venezuela", "Argentina", "Ecuador", "Peru", "Uruguay", "Bolivia"), "Africa" = c("Burkina Faso", "Nigeria", "Sudan", "Tanzania", "Libya", "Egypt", "Tunisia", "Guinea", "Algeria", "Morocco", "South Africa"), "Australia" = c("Australia"), "Europe" = c("The Netherlands", "United Kingdom", "France", "Sweden", "Belgium", "Ireland", "Italy", "Turkey", "Spain", "Portugal", "Slovenia", "Norway", "Czech Republic", "Croatia", "Hungary"), "Asia" = c("Indonesia", "China", "Japan", "Kuwait", "Pakistan", "Kyrgyzstan", "Qatar", "Bahrain", "Saudi Arabia", "United Arab Emirates", "Oman", "Yemen", "Iraq", "Iran", "Syria", "Jordan", "Lebanon", "India", "Uzbekistan", "Sri Lanka", "Israel", "Tajikistan", "Bangladesh", "Malaysia", "Singapore", "Philippines")))
+projectdata2 %>% group_by(Continent) %>% summarize(mean(Percent))
+
+```
+*Filtering the dataset to include only countries that average 10.0 liters or more of pure alcohol consumed per person showed there were ten countries in the dataset that meet this criteria. I used select to view only the countries and their respective total_litres_of_pure_alcohol value. Next, I arranged the data from highest to lowest percent of cousin marriage which showed that Burkina Faso has the highest value at 65.8% of their marriages being between two second cousins or closer. Further, I used mutate to create a new variable called 'total_servings' which gives the number of beer, wine, and spirit servings combined for each country. This contrasts the liters variable because instead of giving the value in actual liters, it gives us the average number of total servings consumed per person for each country. I used mutate and 'str_replace' to change Great Britain to United Kingdom. I then used mutate to create a continent variable, then sorted by continent and determined that Africa has the highest mean percentage of cousin marriage at 33.809091 percent.*
+
+```{R}
+
+projectdata2 %>% summarize(mean(Percent), n_distinct(Percent), sd(Percent), var(Percent), quantile(Percent), min(Percent), max(Percent))
+projectdata2 %>% summarize(mean(beer_servings, na.rm=T), n_distinct(beer_servings), sd(beer_servings, na.rm=T), var(beer_servings, na.rm=T), min(beer_servings, na.rm=T), max(beer_servings, na.rm=T))
+projectdata2 %>% summarize(mean(spirit_servings, na.rm=T), n_distinct(spirit_servings), sd(spirit_servings, na.rm=T), var(spirit_servings, na.rm=T), min(spirit_servings, na.rm=T), max(spirit_servings, na.rm=T))
+projectdata2 %>% summarize(mean(wine_servings, na.rm=T), n_distinct(wine_servings), sd(wine_servings, na.rm=T), var(wine_servings, na.rm=T), min(wine_servings, na.rm=T), max(wine_servings, na.rm=T))
+projectdata2 %>% summarize(mean(total_litres_of_pure_alcohol, na.rm=T), n_distinct(total_litres_of_pure_alcohol), sd(total_litres_of_pure_alcohol, na.rm=T), var(total_litres_of_pure_alcohol, na.rm=T), min(total_litres_of_pure_alcohol, na.rm=T), max(total_litres_of_pure_alcohol, na.rm=T))
+projectdata2 %>% summarize(mean(total_servings, na.rm=T), n_distinct(total_servings), sd(total_servings, na.rm=T), var(total_servings, na.rm=T), min(total_servings, na.rm=T), max(total_servings, na.rm=T))
+
+sum(is.na(projectdata2$Percent))
+sum(is.na(projectdata2$beer_servings))
+sum(is.na(projectdata2$spirit_servings))
+sum(is.na(projectdata2$wine_servings))
+sum(is.na(projectdata2$total_litres_of_pure_alcohol))
+
+projectdata2 %>% group_by(Continent) %>% summarize(sd_alcohol = sd(total_litres_of_pure_alcohol, na.rm=T), n=n(), se_total_alcohol = sd_alcohol/sqrt(n))
+projectdata2 %>% group_by(Continent) %>% summarize(n())
+
+```
+*I computed summary statistics, including mean, n_distinct, sd, var, min, and max for all of my numeric variables, including the one I created using mutate earlier, total_servings, using summarize. Interestingly, there were only 35 unique wine servings across all 70 countries. There was the most variation in total_servings, with a value of 44,567.59, and the least variation in total_litres_of_pure_alchohol with a value of 14.58371. I then grouped by Continent and created my own function to determine standard error of the total_litres_of_pure_alcohol, which was highest for Africa with a value of 1.0176622. Standard error of total liters of alcohol could not be calculated for Australia, as there is only one country in the dataset for the Australian continent. I created a table of counts for each continent and found that Asia has the most observations with 26 countries included.*
+
+#### Tidying: Reshaping
+```{R}
+projectdata5 <- projectdata2 %>% group_by(Continent) %>% mutate(MeanPercent = (mean(Percent)))
+untidy <- projectdata5 %>% pivot_wider(names_from = "Continent", values_from = "MeanPercent")
+untidy <- untidy %>% pivot_longer(8:13, names_to = "Continent", values_to = "MeanPercent")
+glimpse(untidy)
+
+```
+*Because my data was already tidy, I added a ninth column that included the mean cousin marriage percentage for the continent the country is located in. I then used 'pivot_wider' to make each continent a column, and used the mean cousin marriage percentage as the continents value. I then used 'pivot_longer' on the new columns, 8 - 13, to remake a continent column and a mean cousin marriage percentage column in a longer, tidy table.*
+
+#### Visualizing
+
+```{R}
+projectdata2 %>% ggplot(aes(x = Continent, y = Percent)) + geom_bar(stat = "summary", fun = mean) + geom_errorbar(stat = "summary", width = 0.5, color = "red") + theme(panel.border = element_rect(linetype = "dashed", fill = NA)) +  scale_y_continuous(breaks = seq(0,40,5)) + labs(title = "Percentage of Cousin Marriage by Continent", x = "Continent", y = "Percentage of Cousin Marriage")
+```
+*This plot depicts the mean percentage of cousin marriage by continent. Africa and Asia have significantly higher percentages of cousin marriage than any other continent. Europe, North America, and South America have similar cousin marriage percentages, all around approximately 2.0%. Australia has the lowest percetnage of cousin marriage.*
+
+```{R}
+
+projectdata2 %>% ggplot(aes(total_litres_of_pure_alcohol, Percent)) + geom_bin2d() + geom_hex() + theme_classic() + labs(title = "Distribution of Total Liters of Pure Alcohol Consumed by Percent of Cousin Marriage", x = "Total Liters of Pure Alcohol Consumed", y = "Percent of Cousin Marriage") + theme(plot.title = element_text(size = rel(1))) + scale_y_continuous(breaks = seq(0,70,10)) +  scale_fill_gradient(low="lightblue1",high="darkblue") 
+
+```
+*This plot shows the distribution of toal liters of pure alcohol consumed by percentage of cousin marriage. The points get darker as they increase in frequency, or count. The general trend of the graph is that an increase in total liters of alcohol correlates with lower percentage of cousin marriage, and a decrease in total liters of alcohol correlated with a higher percentage of cousin marriage, with a few exceptions in the middle of the graph.*
+
+```{R}
+
+projectdata2 %>% ggplot(aes(spirit_servings, beer_servings)) + geom_point(aes(color = wine_servings)) + geom_smooth(method = "lm") + theme(legend.position = "bottom") + scale_x_continuous(lim = c(0,220)) + scale_y_continuous(lim = c(0,365)) + labs(title = "Distribution of Spirit Servings by Beer Servings", x = "Spirit Servings", y = "Beer Servings")
+
+```
+*This plot shows the distribution of spirit servings by beer servings, as well as wine servings for the given country. Generally, as spirit servings increase, beer servings also increase. Wine servings vary across the graph, which makes sense in that wine is a drink considered culturally important in some places and is served at a young age. Wine is also part of religious ceremonies in some places. There is more variation in beer servings than spirit servings, but they are still fairly positively correlated.*
+
+#### Concluding Remarks
+
+If any!
+
+
+
+
