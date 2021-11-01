@@ -132,11 +132,3 @@ projectdata2 %>% ggplot(aes(spirit_servings, beer_servings)) + geom_point(aes(co
 
 ```
 *This plot shows the distribution of spirit servings by beer servings, as well as wine servings for the given country. Generally, as spirit servings increase, beer servings also increase. Wine servings vary across the graph, which makes sense in that wine is a drink considered culturally important in some places and is served at a young age. Wine is also part of religious ceremonies in some places. There is more variation in beer servings than spirit servings, but they are still fairly positively correlated.*
-
-#### Concluding Remarks
-
-If any!
-
-
-
-
